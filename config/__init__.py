@@ -1,0 +1,3 @@
+"""
+Konfigurasi aplikasi
+"""

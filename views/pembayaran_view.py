@@ -375,58 +375,73 @@ Proses pembayaran ini?
     # ============================================
     
     def cetak_struk(self):
-        """Print receipt"""
+        """Print receipt to PDF"""
         if not self.current_transaksi:
             QMessageBox.warning(self, "Validasi", "Belum ada transaksi yang dipilih")
             return
         
-        # Generate struk text
-        total_tagihan = float(self.current_transaksi['total'])
-        jumlah_bayar = self.ui.spinJumlahBayar.value()
-        kembalian = jumlah_bayar - total_tagihan
-        metode = self.ui.cmbMetodePembayaran.currentText()
-        status = self.ui.cmbStatusPembayaran.currentText()
-        
-        struk = f"""
-{'='*50}
-           MAKEUP APP
-      Struk Pembayaran
-{'='*50}
-
-ID Transaksi  : {self.current_transaksi['id_transaksi']}
-Tanggal       : {Formatters.format_date(self.current_transaksi['tanggal_transaksi'])}
-Pelanggan     : {self.current_transaksi['nama_pelanggan']}
-
-{'='*50}
-DETAIL LAYANAN:
-{'-'*50}
-"""
-        
-        for item in self.current_detail_transaksi:
-            struk += f"{item['nama_layanan']}\n"
-            struk += f"  {item['jumlah']} x {Formatters.format_currency(item['harga'])}"
-            struk += f" = {Formatters.format_currency(item['subtotal'])}\n"
-        
-        struk += f"""
-{'-'*50}
-Total Tagihan : {Formatters.format_currency(total_tagihan)}
-Jumlah Bayar  : {Formatters.format_currency(jumlah_bayar)}
-Kembalian     : {Formatters.format_currency(kembalian if kembalian >= 0 else 0)}
-
-Metode Bayar  : {metode}
-Status        : {status}
-
-{'='*50}
-    Terima Kasih
-   Selamat Datang Kembali
-{'='*50}
-"""
-        
-        # Show struk
-        QMessageBox.information(self, "Struk Pembayaran", struk)
-        
-        # TODO: Implement actual printing to PDF/Printer
-        # For now just show the receipt text
+        try:
+            from utils.pdf_generator import PDFGenerator
+            from PyQt5.QtGui import QDesktopServices
+            from PyQt5.QtCore import QUrl
+            
+            # Prepare data
+            pembayaran_data = {
+                'id_pembayaran': None,
+                'jumlah_bayar': self.ui.spinJumlahBayar.value(),
+                'metode_bayar': self.ui.cmbMetodePembayaran.currentText(),
+                'tanggal_bayar': self.ui.dateTanggalBayar.date().toPyDate(),
+                'status': self.ui.cmbStatusPembayaran.currentText()
+            }
+            
+            # Ask user which format - Simple version without nested imports
+            msg = QMessageBox(self)
+            msg.setIcon(QMessageBox.Question)
+            msg.setWindowTitle('Format Struk')
+            msg.setText('Pilih format struk:')
+            msg.setInformativeText('Yes = Format A4 (Standar)\nNo = Format Thermal (Printer Kasir)')
+            msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
+            msg.setDefaultButton(QMessageBox.Yes)
+            
+            reply = msg.exec_()
+            
+            if reply == QMessageBox.Cancel:
+                return
+            
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            
+            # Generate PDF
+            if reply == QMessageBox.Yes:
+                filepath = PDFGenerator.generate_struk_pembayaran(
+                    self.current_transaksi,
+                    self.current_detail_transaksi,
+                    pembayaran_data
+                )
+            else:
+                filepath = PDFGenerator.generate_struk_thermal(
+                    self.current_transaksi,
+                    self.current_detail_transaksi,
+                    pembayaran_data
+                )
+            
+            QApplication.restoreOverrideCursor()
+            
+            # Ask to open PDF
+            msg2 = QMessageBox(self)
+            msg2.setIcon(QMessageBox.Information)
+            msg2.setWindowTitle('Struk Berhasil Dibuat')
+            msg2.setText('✅ Struk pembayaran berhasil dibuat!')
+            msg2.setInformativeText(f'Lokasi: {filepath}\n\nBuka file PDF sekarang?')
+            msg2.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            msg2.setDefaultButton(QMessageBox.Yes)
+            
+            if msg2.exec_() == QMessageBox.Yes:
+                QDesktopServices.openUrl(QUrl.fromLocalFile(filepath))
+            
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            logger.error(f"Error cetak struk: {e}")
+            QMessageBox.critical(self, "Error", f"Gagal membuat struk PDF:\n{str(e)}")
     
     # ============================================
     # Load History

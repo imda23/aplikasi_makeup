@@ -3,19 +3,18 @@ Konstanta aplikasi yang digunakan di seluruh sistem
 """
 
 # Status Jadwal
+# Status Jadwal
 class StatusJadwal:
-    PENDING = "Pending"
-    CONFIRMED = "Confirmed"
-    COMPLETED = "Completed"
-    CANCELLED = "Cancelled"
+    MENUNGGU = "Menunggu"
+    PROSES = "Proses"
+    SELESAI = "Selesai"
     
     @staticmethod
     def get_all():
         return [
-            StatusJadwal.PENDING,
-            StatusJadwal.CONFIRMED,
-            StatusJadwal.COMPLETED,
-            StatusJadwal.CANCELLED
+            StatusJadwal.MENUNGGU,
+            StatusJadwal.PROSES,
+            StatusJadwal.SELESAI
         ]
 
 # Status Pembayaran

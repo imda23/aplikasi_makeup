@@ -5,6 +5,8 @@ from PyQt5.QtWidgets import (QMainWindow, QMessageBox, QTableWidgetItem,
                              QPushButton, QHBoxLayout, QWidget, QApplication)
 from PyQt5.QtCore import Qt
 from ui.generated.ui_form_pelanggan import Ui_MainWindow
+from utils.rbac_decorator import require_role
+from utils.rbac_helper import RBACHelper
 from services.pelanggan_service import PelangganService
 from services.auth_service import AuthService
 from utils.validators import Validators
@@ -42,7 +44,11 @@ class PelangganView(QMainWindow):
         # Set user info
         user = SessionManager.get_current_user()
         if user:
-            self.ui.lblUsername.setText(f"👤 {user.nama_user}")
+            self.ui.lblUsername.setText(
+                f"👤 {user.nama_user} ({RBACHelper.get_role_name(user.role)})"
+            )
+            # Setup button visibility based on role
+            self.setup_rbac_ui(user.role)
         
         # Setup table
         self.ui.tablePelanggan.setColumnWidth(0, 50)   # ID
@@ -50,6 +56,18 @@ class PelangganView(QMainWindow):
         self.ui.tablePelanggan.setColumnWidth(2, 150)  # No HP
         self.ui.tablePelanggan.setColumnWidth(3, 250)  # Alamat
         self.ui.tablePelanggan.setColumnWidth(4, 180)  # Aksi
+    
+    def setup_rbac_ui(self, role):
+        """
+        Setup UI based on user role
+        
+        Args:
+            role: User role string
+        """
+        if role == 'owner':
+            # Owner: Read-only
+            self.ui.btnTambahPelanggan.setVisible(False)
+            self.ui.groupFormPelanggan.setVisible(False)
     
     def connect_signals(self):
         """Connect signals"""
@@ -137,7 +155,8 @@ class PelangganView(QMainWindow):
             QApplication.restoreOverrideCursor()
             logger.error(f"Error searching: {e}")
     
-    def show_form_create(self):
+    @require_role('admin', 'kasir')
+    def show_form_create(self,checked=False):
         """Show form for create"""
         self.current_mode = "create"
         self.current_id = None
@@ -146,6 +165,7 @@ class PelangganView(QMainWindow):
         self.ui.groupFormPelanggan.setTitle("📝 Form Tambah Pelanggan")
         self.ui.txtNamaPelanggan.setFocus()
     
+    @require_role('admin', 'kasir')
     def show_form_update(self, id_pelanggan):
         """Show form for update"""
         try:
@@ -171,7 +191,8 @@ class PelangganView(QMainWindow):
             logger.error(f"Error loading for update: {e}")
             QMessageBox.critical(self, "Error", "Gagal memuat data")
     
-    def save_pelanggan(self):
+    @require_role('admin', 'kasir')
+    def save_pelanggan(self,checked=False):
         """Save pelanggan"""
         # Get data
         nama = self.ui.txtNamaPelanggan.text().strip()
@@ -204,6 +225,7 @@ class PelangganView(QMainWindow):
             logger.error(f"Error saving: {e}")
             QMessageBox.critical(self, "Error", "Terjadi kesalahan sistem")
     
+    @require_role('admin')
     def delete_pelanggan(self, id_pelanggan):
         """Delete pelanggan"""
         reply = QMessageBox.question(
@@ -275,40 +297,42 @@ class PelangganView(QMainWindow):
         layout = QHBoxLayout(widget)
         layout.setContentsMargins(5, 0, 5, 0)
         
-        # Edit button
-        btn_edit = QPushButton("✏️ Edit")
-        btn_edit.setStyleSheet("""
-            QPushButton {
-                background-color: #2196F3;
-                color: white;
-                border: none;
-                border-radius: 3px;
-                padding: 5px 10px;
-            }
-            QPushButton:hover {
-                background-color: #0b7dda;
-            }
-        """)
-        btn_edit.clicked.connect(lambda: self.show_form_update(id_pelanggan))
+        user = SessionManager.get_current_user()
         
-        # Delete button
-        btn_delete = QPushButton("🗑️ Hapus")
-        btn_delete.setStyleSheet("""
-            QPushButton {
-                background-color: #f44336;
-                color: white;
-                border: none;
-                border-radius: 3px;
-                padding: 5px 10px;
-            }
-            QPushButton:hover {
-                background-color: #da190b;
-            }
-        """)
-        btn_delete.clicked.connect(lambda: self.delete_pelanggan(id_pelanggan))
+        if user and user.role in ['admin', 'kasir']:
+            btn_edit = QPushButton("✏️ Edit")
+            btn_edit.setStyleSheet("""
+                QPushButton {
+                    background-color: #2196F3;
+                    color: white;
+                    border: none;
+                    border-radius: 3px;
+                    padding: 5px 10px;
+                }
+                QPushButton:hover {
+                    background-color: #0b7dda;
+                }
+            """)
+            btn_edit.clicked.connect(lambda: self.show_form_update(id_pelanggan))
+            layout.addWidget(btn_edit)
         
-        layout.addWidget(btn_edit)
-        layout.addWidget(btn_delete)
+        if user and user.role == 'admin':
+            btn_delete = QPushButton("🗑️ Hapus")
+            btn_delete.setStyleSheet("""
+                QPushButton {
+                    background-color: #f44336;
+                    color: white;
+                    border: none;
+                    border-radius: 3px;
+                    padding: 5px 10px;
+                }
+                QPushButton:hover {
+                    background-color: #da190b;
+                }
+            """)
+            btn_delete.clicked.connect(lambda: self.delete_pelanggan(id_pelanggan))
+            layout.addWidget(btn_delete)
+        
         layout.addStretch()
         
         self.ui.tablePelanggan.setCellWidget(row, 4, widget)
@@ -325,12 +349,10 @@ class PelangganView(QMainWindow):
         self.ui.txtNoHPPelanggan.clear()
         self.ui.txtAlamatPelanggan.clear()
     
-    def cancel_form(self):
-        """Cancel form"""
-        self.clear_form()
+    def cancel_form(self, checked=False):
+        """Cancel and hide form"""
         self.ui.groupFormPelanggan.setVisible(False)
-        self.current_mode = "create"
-        self.current_id = None
+        self.clear_form()
     
     # ============================================
     # Navigation

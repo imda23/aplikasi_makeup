@@ -5,6 +5,8 @@ from PyQt5.QtWidgets import QMainWindow, QMessageBox
 from ui.generated.ui_dashboard import Ui_MainWindow
 from utils.session_manager import SessionManager
 from services.dashboard_service import DashboardService
+from utils.rbac_decorator import require_role
+from utils.rbac_helper import RBACHelper
 from utils.formatters import Formatters
 import logging
 
@@ -32,7 +34,38 @@ class MainWindow(QMainWindow):
         # Set user info
         user = SessionManager.get_current_user()
         if user:
-            self.ui.lblUsername.setText(f"👤 {user.nama_user}")
+            self.ui.lblUsername.setText(
+                f"👤 {user.nama_user} ({RBACHelper.get_role_name(user.role)})"
+            )
+            # Setup menu visibility based on role
+            self.setup_menu_visibility(user.role)
+    
+    def setup_menu_visibility(self, role):
+        """
+        Setup menu visibility based on user role
+        
+        Args:
+            role: User role string
+        """
+        if role == 'makeup_artist':
+            # MUA: Hanya Jadwal
+            self.ui.btnPelanggan.setVisible(False)
+            self.ui.btnLayanan.setVisible(False)
+            self.ui.btnTransaksi.setVisible(False)
+            self.ui.btnPembayaran.setVisible(False)
+            
+        elif role == 'kasir':
+            # Kasir: Pelanggan, Transaksi, Pembayaran
+            self.ui.btnLayanan.setVisible(False)
+            self.ui.btnJadwal.setVisible(False)
+            
+        elif role == 'owner':
+            # Owner: Semua menu visible (read-only akan di-handle di view)
+            pass
+            
+        elif role == 'admin':
+            # Admin: Full access - semua visible
+            pass
     
     def connect_signals(self):
         """Connect button signals"""
@@ -47,35 +80,40 @@ class MainWindow(QMainWindow):
         self.ui.btnTransaksi.clicked.connect(self.go_transaksi)
         self.ui.btnPembayaran.clicked.connect(self.go_pembayaran)
     
-    def go_pelanggan(self):
+    @require_role('admin', 'kasir', 'owner')
+    def go_pelanggan(self,checked=False):
         """Go to pelanggan view"""
         from views.pelanggan_view import PelangganView
         self.pelanggan_view = PelangganView()
         self.pelanggan_view.show()
         self.close()
 
-    def go_layanan(self):
+    @require_role('admin')
+    def go_layanan(self,checked=False):
         """Go to layanan view"""
         from views.layanan_view import LayananView
         self.layanan_view = LayananView()
         self.layanan_view.show()
         self.close()
 
-    def go_jadwal(self):
+    @require_role('admin', 'makeup_artist', 'owner')
+    def go_jadwal(self,checked=False):
         """Go to jadwal view"""
         from views.jadwal_view import JadwalView
         self.jadwal_view = JadwalView()
         self.jadwal_view.show()
         self.close()
-
-    def go_transaksi(self):
+    
+    @require_role('admin', 'kasir', 'owner')
+    def go_transaksi(self,checked=False):
         """Go to transaksi view"""
         from views.transaksi_view import TransaksiView
         self.transaksi_view = TransaksiView()
         self.transaksi_view.show()
         self.close()
 
-    def go_pembayaran(self):
+    @require_role('admin', 'kasir', 'owner')
+    def go_pembayaran(self,checked=False):
         """Go to pembayaran view"""
         from views.pembayaran_view import PembayaranView
         self.pembayaran_view = PembayaranView()
@@ -91,7 +129,7 @@ class MainWindow(QMainWindow):
             f"Untuk saat ini, silakan lihat dashboard."
         )
     
-    def show_dashboard(self):
+    def show_dashboard(self,checked=False):
         """Show dashboard (refresh)"""
         self.load_dashboard()
     

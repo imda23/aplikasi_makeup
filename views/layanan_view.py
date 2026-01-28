@@ -7,6 +7,8 @@ from PyQt5.QtWidgets import (QMainWindow, QMessageBox, QTableWidgetItem,
 from PyQt5.QtCore import Qt, QTime
 from ui.generated.ui_form_layanan import Ui_MainWindow
 from services.layanan_service import LayananService
+from utils.rbac_decorator import require_role
+from utils.rbac_helper import RBACHelper
 from services.auth_service import AuthService
 from utils.validators import Validators
 from utils.session_manager import SessionManager
@@ -47,8 +49,13 @@ class LayananView(QMainWindow):
         # Set user info
         user = SessionManager.get_current_user()
         if user:
-            self.ui.lblUsername.setText(f"👤 {user.nama_user}")
+            self.ui.lblUsername.setText(
+                f"👤 {user.nama_user} ({RBACHelper.get_role_name(user.role)})"
+            )
         
+            # Setup RBAC UI
+            self.setup_rbac_ui(user.role)
+            
         # Setup table layanan
         self.ui.tableLayanan.setColumnWidth(0, 50)   # ID
         self.ui.tableLayanan.setColumnWidth(1, 200)  # Nama
@@ -61,6 +68,14 @@ class LayananView(QMainWindow):
         self.ui.tableKategori.setColumnWidth(0, 100)  # ID
         self.ui.tableKategori.setColumnWidth(1, 400)  # Nama
         self.ui.tableKategori.setColumnWidth(2, 200)  # Aksi
+    
+    def setup_rbac_ui(self, role):
+        """Setup UI based on user role"""
+        if role == 'owner':
+            # Owner: Read-only
+            self.ui.btnTambahLayanan.setVisible(False)
+            self.ui.btnTambahKategori.setVisible(False)
+            self.ui.groupFormLayanan.setVisible(False)
     
     def connect_signals(self):
         """Connect signals"""
@@ -150,7 +165,8 @@ class LayananView(QMainWindow):
         except Exception as e:
             logger.error(f"Error searching: {e}")
     
-    def show_form_create(self):
+    @require_role('admin')
+    def show_form_create(self, checked=False):
         """Show form for create layanan"""
         self.current_mode = "create"
         self.current_id = None
@@ -159,6 +175,7 @@ class LayananView(QMainWindow):
         self.ui.groupFormLayanan.setTitle("📝 Form Tambah Layanan")
         self.ui.txtNamaLayanan.setFocus()
     
+    @require_role('admin')
     def show_form_update(self, id_layanan):
         """Show form for update layanan"""
         try:
@@ -201,7 +218,8 @@ class LayananView(QMainWindow):
             logger.error(f"Error loading for update: {e}")
             QMessageBox.critical(self, "Error", "Gagal memuat data")
     
-    def save_layanan(self):
+    @require_role('admin')
+    def save_layanan(self,checked=False):
         """Save layanan"""
         # Get data
         nama = self.ui.txtNamaLayanan.text().strip()
@@ -246,6 +264,7 @@ class LayananView(QMainWindow):
             logger.error(f"Error saving: {e}")
             QMessageBox.critical(self, "Error", "Terjadi kesalahan sistem")
     
+    @require_role('admin')
     def delete_layanan(self, id_layanan):
         """Delete layanan"""
         reply = QMessageBox.question(
@@ -351,7 +370,8 @@ class LayananView(QMainWindow):
         except Exception as e:
             logger.error(f"Error searching kategori: {e}")
     
-    def create_kategori(self):
+    @require_role('admin')
+    def create_kategori(self,checked=False):
         """Create new kategori using input dialog"""
         nama, ok = QInputDialog.getText(
             self, 
@@ -379,6 +399,7 @@ class LayananView(QMainWindow):
                 logger.error(f"Error creating kategori: {e}")
                 QMessageBox.critical(self, "Error", "Gagal menambahkan kategori")
     
+    @require_role('admin')
     def update_kategori(self, id_kategori):
         """Update kategori"""
         try:
@@ -415,6 +436,7 @@ class LayananView(QMainWindow):
             logger.error(f"Error updating kategori: {e}")
             QMessageBox.critical(self, "Error", "Gagal mengupdate kategori")
     
+    @require_role('admin')
     def delete_kategori(self, id_kategori):
         """Delete kategori"""
         reply = QMessageBox.question(
@@ -487,40 +509,44 @@ class LayananView(QMainWindow):
         layout = QHBoxLayout(widget)
         layout.setContentsMargins(5, 0, 5, 0)
         
-        # Edit button
-        btn_edit = QPushButton("✏️ Edit")
-        btn_edit.setStyleSheet("""
-            QPushButton {
-                background-color: #2196F3;
-                color: white;
-                border: none;
-                border-radius: 3px;
-                padding: 5px 10px;
-            }
-            QPushButton:hover {
-                background-color: #0b7dda;
-            }
-        """)
-        btn_edit.clicked.connect(lambda: self.show_form_update(id_layanan))
+        user = SessionManager.get_current_user()
         
-        # Delete button
-        btn_delete = QPushButton("🗑️ Hapus")
-        btn_delete.setStyleSheet("""
-            QPushButton {
-                background-color: #f44336;
-                color: white;
-                border: none;
-                border-radius: 3px;
-                padding: 5px 10px;
-            }
-            QPushButton:hover {
-                background-color: #da190b;
-            }
-        """)
-        btn_delete.clicked.connect(lambda: self.delete_layanan(id_layanan))
+        if user and user.role == 'admin':
+            # Edit button
+            btn_edit = QPushButton("✏️ Edit")
+            btn_edit.setStyleSheet("""
+                QPushButton {
+                    background-color: #2196F3;
+                    color: white;
+                    border: none;
+                    border-radius: 3px;
+                    padding: 5px 10px;
+                }
+                QPushButton:hover {
+                    background-color: #0b7dda;
+                }
+            """)
+            btn_edit.clicked.connect(lambda: self.show_form_update(id_layanan))
+            
+            # Delete button
+            btn_delete = QPushButton("🗑️ Hapus")
+            btn_delete.setStyleSheet("""
+                QPushButton {
+                    background-color: #f44336;
+                    color: white;
+                    border: none;
+                    border-radius: 3px;
+                    padding: 5px 10px;
+                }
+                QPushButton:hover {
+                    background-color: #da190b;
+                }
+            """)
+            btn_delete.clicked.connect(lambda: self.delete_layanan(id_layanan))
+            
+            layout.addWidget(btn_edit)
+            layout.addWidget(btn_delete)
         
-        layout.addWidget(btn_edit)
-        layout.addWidget(btn_delete)
         layout.addStretch()
         
         self.ui.tableLayanan.setCellWidget(row, 5, widget)
@@ -531,40 +557,44 @@ class LayananView(QMainWindow):
         layout = QHBoxLayout(widget)
         layout.setContentsMargins(5, 0, 5, 0)
         
-        # Edit button
-        btn_edit = QPushButton("✏️ Edit")
-        btn_edit.setStyleSheet("""
-            QPushButton {
-                background-color: #2196F3;
-                color: white;
-                border: none;
-                border-radius: 3px;
-                padding: 5px 10px;
-            }
-            QPushButton:hover {
-                background-color: #0b7dda;
-            }
-        """)
-        btn_edit.clicked.connect(lambda: self.update_kategori(id_kategori))
+        user = SessionManager.get_current_user()
         
-        # Delete button
-        btn_delete = QPushButton("🗑️ Hapus")
-        btn_delete.setStyleSheet("""
-            QPushButton {
-                background-color: #f44336;
-                color: white;
-                border: none;
-                border-radius: 3px;
-                padding: 5px 10px;
-            }
-            QPushButton:hover {
-                background-color: #da190b;
-            }
-        """)
-        btn_delete.clicked.connect(lambda: self.delete_kategori(id_kategori))
+        if user and user.role == 'admin':
+            # Edit button
+            btn_edit = QPushButton("✏️ Edit")
+            btn_edit.setStyleSheet("""
+                QPushButton {
+                    background-color: #2196F3;
+                    color: white;
+                    border: none;
+                    border-radius: 3px;
+                    padding: 5px 10px;
+                }
+                QPushButton:hover {
+                    background-color: #0b7dda;
+                }
+            """)
+            btn_edit.clicked.connect(lambda: self.update_kategori(id_kategori))
+            
+            # Delete button
+            btn_delete = QPushButton("🗑️ Hapus")
+            btn_delete.setStyleSheet("""
+                QPushButton {
+                    background-color: #f44336;
+                    color: white;
+                    border: none;
+                    border-radius: 3px;
+                    padding: 5px 10px;
+                }
+                QPushButton:hover {
+                    background-color: #da190b;
+                }
+            """)
+            btn_delete.clicked.connect(lambda: self.delete_kategori(id_kategori))
+            
+            layout.addWidget(btn_edit)
+            layout.addWidget(btn_delete)
         
-        layout.addWidget(btn_edit)
-        layout.addWidget(btn_delete)
         layout.addStretch()
         
         self.ui.tableKategori.setCellWidget(row, 2, widget)
@@ -583,12 +613,10 @@ class LayananView(QMainWindow):
         self.ui.timeDurasi.setTime(QTime(1, 0))
         self.ui.txtDeskripsi.clear()
     
-    def cancel_form(self):
-        """Cancel form"""
-        self.clear_form_layanan()
+    def cancel_form(self, checked=False):
+        """Cancel and hide form"""
         self.ui.groupFormLayanan.setVisible(False)
-        self.current_mode = "create"
-        self.current_id = None
+        self.clear_form()
     
     # ============================================
     # Navigation

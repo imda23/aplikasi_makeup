@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel, QLineEdit,
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from services.auth_service import AuthService
+from utils.rbac_helper import RBACHelper
 from views.main_window import MainWindow
 import logging
 
@@ -156,6 +157,13 @@ class LoginView(QWidget):
         
         if success:
             logger.info(f"Login successful: {username}")
+            
+            QMessageBox.information(
+                self,
+                "Login Berhasil",
+                f"Selamat datang, {user.nama_user}!\n\n"
+                f"Role: {RBACHelper.get_role_name(user.role)}"
+            )
             
             # Open main window
             self.main_window = MainWindow()

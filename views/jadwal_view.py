@@ -7,6 +7,8 @@ from PyQt5.QtCore import Qt, QDate, QTime
 from ui.generated.ui_form_jadwal import Ui_MainWindow
 from services.jadwal_service import JadwalService
 from services.pelanggan_service import PelangganService
+from utils.rbac_decorator import require_role
+from utils.rbac_helper import RBACHelper
 from services.auth_service import AuthService
 from utils.validators import Validators
 from utils.session_manager import SessionManager
@@ -49,7 +51,10 @@ class JadwalView(QMainWindow):
         # Set user info
         user = SessionManager.get_current_user()
         if user:
-            self.ui.lblUsername.setText(f"👤 {user.nama_user}")
+            self.ui.lblUsername.setText(
+                f"👤 {user.nama_user} ({RBACHelper.get_role_name(user.role)})"
+            )
+            self.setup_rbac_ui(user.role)
         
         # Setup calendar
         self.ui.calendarJadwal.setSelectedDate(QDate.currentDate())
@@ -82,6 +87,12 @@ class JadwalView(QMainWindow):
         # Set default times
         self.ui.timeJamMulai.setTime(QTime(9, 0))
         self.ui.timeJamSelesai.setTime(QTime(10, 30))
+    
+    def setup_rbac_ui(self, role):
+        """Setup UI based on user role"""
+        if role == 'owner':
+            self.ui.btnBuatJadwal.setVisible(False)
+            self.ui.groupFormBooking.setVisible(False)
     
     def connect_signals(self):
         """Connect signals"""
@@ -173,7 +184,8 @@ class JadwalView(QMainWindow):
         selected_date = self.ui.calendarJadwal.selectedDate()
         self.ui.dateTanggal.setDate(selected_date)
     
-    def show_form_create(self):
+    @require_role('admin', 'makeup_artist')
+    def show_form_create(self, checked=False):
         """Show form for create jadwal"""
         self.current_mode = "create"
         self.current_id = None
@@ -182,6 +194,7 @@ class JadwalView(QMainWindow):
         self.ui.groupFormBooking.setTitle("📝 Form Booking Baru")
         self.ui.cmbPelanggan.setFocus()
     
+    @require_role('admin', 'makeup_artist')
     def show_form_update(self, id_jadwal):
         """Show form for update jadwal"""
         try:
@@ -233,7 +246,8 @@ class JadwalView(QMainWindow):
             logger.error(f"Error loading for update: {e}")
             QMessageBox.critical(self, "Error", f"Gagal memuat data: {str(e)}")
     
-    def save_jadwal(self):
+    @require_role('admin', 'makeup_artist')
+    def save_jadwal(self, checked=False):
         """Save jadwal"""
         # Get data
         id_pelanggan = self.ui.cmbPelanggan.currentData()
@@ -286,6 +300,7 @@ class JadwalView(QMainWindow):
             logger.error(f"Error saving: {e}")
             QMessageBox.critical(self, "Error", "Terjadi kesalahan sistem")
     
+    @require_role('admin', 'makeup_artist')
     def delete_jadwal(self, id_jadwal):
         """Delete jadwal"""
         reply = QMessageBox.question(
@@ -399,47 +414,25 @@ class JadwalView(QMainWindow):
         return True
     
     def add_action_buttons(self, row, id_jadwal):
-        """Add action buttons"""
         widget = QWidget()
         layout = QHBoxLayout(widget)
         layout.setContentsMargins(5, 0, 5, 0)
         
-        # Edit button
-        btn_edit = QPushButton("✏️ Edit")
-        btn_edit.setStyleSheet("""
-            QPushButton {
-                background-color: #2196F3;
-                color: white;
-                border: none;
-                border-radius: 3px;
-                padding: 5px 10px;
-            }
-            QPushButton:hover {
-                background-color: #0b7dda;
-            }
-        """)
-        btn_edit.clicked.connect(lambda: self.show_form_update(id_jadwal))
+        user = SessionManager.get_current_user()
         
-        # Delete button
-        btn_delete = QPushButton("🗑️ Hapus")
-        btn_delete.setStyleSheet("""
-            QPushButton {
-                background-color: #f44336;
-                color: white;
-                border: none;
-                border-radius: 3px;
-                padding: 5px 10px;
-            }
-            QPushButton:hover {
-                background-color: #da190b;
-            }
-        """)
-        btn_delete.clicked.connect(lambda: self.delete_jadwal(id_jadwal))
+        if user and user.role in ['admin', 'makeup_artist']:
+            btn_edit = QPushButton("✏️ Edit")
+            # ... style ...
+            btn_edit.clicked.connect(lambda: self.show_form_update(id_jadwal))
+            layout.addWidget(btn_edit)
         
-        layout.addWidget(btn_edit)
-        layout.addWidget(btn_delete)
+        if user and user.role == 'admin':
+            btn_delete = QPushButton("🗑️ Hapus")
+            # ... style ...
+            btn_delete.clicked.connect(lambda: self.delete_jadwal(id_jadwal))
+            layout.addWidget(btn_delete)
+        
         layout.addStretch()
-        
         self.ui.tableJadwal.setCellWidget(row, 7, widget)
     
     def create_item(self, text):
@@ -457,12 +450,10 @@ class JadwalView(QMainWindow):
         self.ui.timeJamSelesai.setTime(QTime(10, 30))
         self.ui.cmbStatus.setCurrentIndex(0)
     
-    def cancel_form(self):
-        """Cancel form"""
-        self.clear_form()
+    def cancel_form(self, checked=False):
+        """Cancel and hide form"""
         self.ui.groupFormBooking.setVisible(False)
-        self.current_mode = "create"
-        self.current_id = None
+        self.clear_form()
     
     # ============================================
     # Navigation

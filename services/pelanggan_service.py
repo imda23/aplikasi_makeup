@@ -2,6 +2,7 @@
 from config.database import Database
 from typing import List, Dict, Tuple, Optional
 import logging
+from utils.rbac_helper import RBACHelper
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,8 @@ class PelangganService:
     
     def create(self, nama: str, no_hp: str, alamat: str) -> Tuple[bool, str]:
         try:
+            if not RBACHelper.check_permission(['admin', 'kasir'], 'create_pelanggan'):
+                return False, "Anda tidak memiliki izin untuk menambah pelanggan"
             check = "SELECT COUNT(*) as count FROM pelanggan WHERE no_hp = %s"
             result = Database.execute_query(check, (no_hp,), fetch=True)
             if result[0]['count'] > 0:
@@ -53,6 +56,8 @@ class PelangganService:
     
     def update(self, id_pelanggan: int, nama: str, no_hp: str, alamat: str) -> Tuple[bool, str]:
         try:
+            if not RBACHelper.check_permission(['admin', 'kasir'], 'update_pelanggan'):
+                return False, "Anda tidak memiliki izin untuk mengubah pelanggan"
             check = "SELECT COUNT(*) as count FROM pelanggan WHERE no_hp = %s AND id_pelanggan != %s"
             result = Database.execute_query(check, (no_hp, id_pelanggan), fetch=True)
             if result[0]['count'] > 0:
@@ -68,6 +73,8 @@ class PelangganService:
     
     def delete(self, id_pelanggan: int) -> Tuple[bool, str]:
         try:
+            if not RBACHelper.check_permission(['admin'], 'delete_pelanggan'):
+                return False, "Hanya Admin yang dapat menghapus pelanggan"
             check = "SELECT COUNT(*) as count FROM transaksi WHERE id_pelanggan = %s"
             result = Database.execute_query(check, (id_pelanggan,), fetch=True)
             if result[0]['count'] > 0:

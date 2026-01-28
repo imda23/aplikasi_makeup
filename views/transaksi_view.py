@@ -9,6 +9,8 @@ from PyQt5.QtCore import Qt, QDate
 from ui.generated.ui_form_transaksi import Ui_MainWindow
 from services.transaksi_service import TransaksiService
 from services.pelanggan_service import PelangganService
+from utils.rbac_decorator import require_role
+from utils.rbac_helper import RBACHelper
 from services.layanan_service import LayananService
 from services.auth_service import AuthService
 from utils.session_manager import SessionManager
@@ -48,7 +50,10 @@ class TransaksiView(QMainWindow):
         # Set user info
         user = SessionManager.get_current_user()
         if user:
-            self.ui.lblUsername.setText(f"👤 {user.nama_user}")
+            self.ui.lblUsername.setText(
+                f"👤 {user.nama_user} ({RBACHelper.get_role_name(user.role)})"
+            )
+            self.setup_rbac_ui(user.role)
         
         # Set tanggal hari ini
         self.ui.dateTanggal.setDate(QDate.currentDate())
@@ -70,6 +75,14 @@ class TransaksiView(QMainWindow):
         
         # Reset total
         self.update_total()
+    
+    def setup_rbac_ui(self, role):
+        """Setup UI based on user role"""
+        if role == 'owner':
+            self.ui.btnTambahLayanan.setVisible(False)
+            self.ui.btnSimpanTransaksi.setVisible(False)
+            self.ui.groupInfoTransaksi.setEnabled(False)
+            self.ui.groupDetailLayanan.setEnabled(False)
     
     def connect_signals(self):
         """Connect signals"""
@@ -187,7 +200,8 @@ class TransaksiView(QMainWindow):
     # Detail Layanan Management
     # ============================================
     
-    def show_dialog_tambah_layanan(self):
+    @require_role('admin', 'kasir')
+    def show_dialog_tambah_layanan(self, checked=False):
         """Show dialog to add layanan"""
         dialog = TambahLayananDialog(self)
         if dialog.exec_() == QDialog.Accepted:
@@ -259,29 +273,19 @@ class TransaksiView(QMainWindow):
             self.add_action_button_detail(row_idx, row_idx)
     
     def add_action_button_detail(self, row, index):
-        """Add delete button to detail row"""
         widget = QWidget()
         layout = QHBoxLayout(widget)
         layout.setContentsMargins(5, 0, 5, 0)
         
-        btn_delete = QPushButton("🗑️")
-        btn_delete.setStyleSheet("""
-            QPushButton {
-                background-color: #f44336;
-                color: white;
-                border: none;
-                border-radius: 3px;
-                padding: 5px 10px;
-            }
-            QPushButton:hover {
-                background-color: #da190b;
-            }
-        """)
-        btn_delete.clicked.connect(lambda: self.remove_detail_item(index))
+        user = SessionManager.get_current_user()
         
-        layout.addWidget(btn_delete)
+        if user and user.role in ['admin', 'kasir']:
+            btn_delete = QPushButton("🗑️")
+            # ... style ...
+            btn_delete.clicked.connect(lambda: self.remove_detail_item(index))
+            layout.addWidget(btn_delete)
+        
         layout.addStretch()
-        
         self.ui.tableDetailLayanan.setCellWidget(row, 4, widget)
     
     def update_total(self):
@@ -298,7 +302,8 @@ class TransaksiView(QMainWindow):
     # Save Transaksi
     # ============================================
     
-    def save_transaksi(self):
+    @require_role('admin', 'kasir')
+    def save_transaksi(self, checked=False):
         """Save transaction"""
         # Validate
         id_pelanggan = self.ui.cmbPelanggan.currentData()
@@ -367,7 +372,7 @@ class TransaksiView(QMainWindow):
             logger.error(f"Error saving transaksi: {e}")
             QMessageBox.critical(self, "Error", f"Gagal menyimpan transaksi: {str(e)}")
     
-    def reset_form(self):
+    def reset_form(self, checked=False):
         """Reset form"""
         self.ui.cmbPelanggan.setCurrentIndex(0)
         self.ui.cmbJadwal.setCurrentIndex(0)

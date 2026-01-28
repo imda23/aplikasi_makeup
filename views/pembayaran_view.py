@@ -7,6 +7,8 @@ from PyQt5.QtCore import Qt, QDate
 from ui.generated.ui_form_pembayaran import Ui_MainWindow
 from services.pembayaran_service import PembayaranService
 from services.auth_service import AuthService
+from utils.rbac_decorator import require_role
+from utils.rbac_helper import RBACHelper
 from utils.session_manager import SessionManager
 from utils.formatters import Formatters
 from config.constants import StatusPembayaran, MetodePembayaran
@@ -40,7 +42,10 @@ class PembayaranView(QMainWindow):
         # Set user info
         user = SessionManager.get_current_user()
         if user:
-            self.ui.lblUsername.setText(f"👤 {user.nama_user}")
+            self.ui.lblUsername.setText(
+                f"👤 {user.nama_user} ({RBACHelper.get_role_name(user.role)})"
+            )
+            self.setup_rbac_ui(user.role)
         
         # Set tanggal hari ini
         self.ui.dateTanggalBayar.setDate(QDate.currentDate())
@@ -71,6 +76,12 @@ class PembayaranView(QMainWindow):
         self.ui.tableHistoryPembayaran.setColumnWidth(4, 150)  # Metode
         self.ui.tableHistoryPembayaran.setColumnWidth(5, 120)  # Tanggal
         self.ui.tableHistoryPembayaran.setColumnWidth(6, 100)  # Status
+    
+    def setup_rbac_ui(self, role):
+        """Setup UI based on user role"""
+        if role == 'owner':
+            self.ui.groupSearch.setEnabled(False)
+            self.ui.btnProsesPembayaran.setVisible(False)
     
     def connect_signals(self):
         """Connect signals"""
@@ -273,7 +284,8 @@ class PembayaranView(QMainWindow):
     # Proses Pembayaran
     # ============================================
     
-    def proses_pembayaran(self):
+    @require_role('admin', 'kasir')
+    def proses_pembayaran(self, checked=False):
         """Process payment"""
         # Validate
         if not self.current_transaksi:
@@ -374,7 +386,7 @@ Proses pembayaran ini?
     # Cetak Struk
     # ============================================
     
-    def cetak_struk(self):
+    def cetak_struk(self, checked=False):
         """Print receipt to PDF"""
         if not self.current_transaksi:
             QMessageBox.warning(self, "Validasi", "Belum ada transaksi yang dipilih")

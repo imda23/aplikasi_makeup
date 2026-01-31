@@ -46,6 +46,7 @@ class PembayaranView(QMainWindow):
                 f"👤 {user.nama_user} ({RBACHelper.get_role_name(user.role)})"
             )
             self.setup_rbac_ui(user.role)
+            self.setup_menu_visibility(user.role)
         
         # Set tanggal hari ini
         self.ui.dateTanggalBayar.setDate(QDate.currentDate())
@@ -82,6 +83,33 @@ class PembayaranView(QMainWindow):
         if role == 'owner':
             self.ui.groupSearch.setEnabled(False)
             self.ui.btnProsesPembayaran.setVisible(False)
+    
+    def setup_menu_visibility(self, role):
+        """
+        Setup sidebar menu visibility based on user role
+        
+        Args:
+            role: User role string
+        """
+        if role == 'makeup_artist':
+            # MUA: Hanya Dashboard dan Jadwal
+            self.ui.btnPelanggan.setVisible(False)
+            self.ui.btnLayanan.setVisible(False)
+            self.ui.btnTransaksi.setVisible(False)
+            self.ui.btnPembayaran.setVisible(False)
+            
+        elif role == 'kasir':
+            # Kasir: Dashboard, Pelanggan, Transaksi, Pembayaran
+            self.ui.btnLayanan.setVisible(False)
+            self.ui.btnJadwal.setVisible(False)
+            
+        elif role == 'owner':
+            # Owner: Semua menu visible (read-only di-handle di setup_rbac_ui)
+            pass
+            
+        elif role == 'admin':
+            # Admin: Full access - semua visible
+            pass
     
     def connect_signals(self):
         """Connect signals"""

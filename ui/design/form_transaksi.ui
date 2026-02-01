@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1200</width>
+    <width>1201</width>
     <height>800</height>
    </rect>
   </property>
@@ -395,16 +395,28 @@ QGroupBox::title {
                <property name="minimumSize">
                 <size>
                  <width>0</width>
-                 <height>40</height>
+                 <height>35</height>
                 </size>
                </property>
                <property name="maximumSize">
                 <size>
                  <width>16777215</width>
-                 <height>40</height>
+                 <height>35</height>
                 </size>
                </property>
                <layout class="QHBoxLayout" name="horizontalLayout_3">
+                <property name="leftMargin">
+                 <number>11</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>0</number>
+                </property>
                 <item>
                  <widget class="QLabel" name="label_4">
                   <property name="font">
@@ -433,11 +445,29 @@ QGroupBox::title {
                 </item>
                 <item>
                  <widget class="QPushButton" name="btnTambahLayanan">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <weight>75</weight>
+                    <italic>false</italic>
+                    <bold>true</bold>
+                   </font>
+                  </property>
                   <property name="styleSheet">
                    <string notr="true">QPushButton {
     background-color: #E91E63;
-    color: white;
-    padding: 8px 15px;
+    color: white; 
     border: none;
     border-radius: 5px;
     font-weight: bold;
@@ -509,6 +539,12 @@ QHeaderView::section {
           </item>
           <item>
            <widget class="QFrame" name="frameTotalTransaksi">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="minimumSize">
              <size>
               <width>0</width>
@@ -537,6 +573,12 @@ QHeaderView::section {
              </item>
              <item>
               <widget class="QGroupBox" name="groupTotal">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="minimumSize">
                 <size>
                  <width>300</width>
@@ -547,8 +589,7 @@ QHeaderView::section {
                 <string notr="true">QGroupBox {
     border: 2px solid #E91E63;
     border-radius: 8px;
-    margin-top: 10px;
-    padding: 15px;
+    margin-top: 8px;
     background-color: white;
     font-weight: bold;
 }
@@ -563,14 +604,19 @@ QGroupBox::title {
                <property name="title">
                 <string>💰 Total</string>
                </property>
-               <layout class="QFormLayout" name="formLayout">
-                <item row="0" column="0">
-                 <widget class="QLabel" name="label_5">
-                  <property name="text">
-                   <string>Subtotal:</string>
-                  </property>
-                 </widget>
-                </item>
+               <layout class="QGridLayout" name="gridLayout_2">
+                <property name="leftMargin">
+                 <number>15</number>
+                </property>
+                <property name="topMargin">
+                 <number>10</number>
+                </property>
+                <property name="rightMargin">
+                 <number>15</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>10</number>
+                </property>
                 <item row="0" column="1">
                  <widget class="QLabel" name="lblSubtotal">
                   <property name="font">
@@ -594,22 +640,6 @@ QGroupBox::title {
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="1">
-                 <widget class="QLabel" name="lblDiskon">
-                  <property name="font">
-                   <font>
-                    <weight>75</weight>
-                    <bold>true</bold>
-                   </font>
-                  </property>
-                  <property name="text">
-                   <string>Rp 0</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
                 <item row="2" column="0">
                  <widget class="QLabel" name="label_9">
                   <property name="font">
@@ -626,9 +656,21 @@ QGroupBox::title {
                 </item>
                 <item row="2" column="1">
                  <widget class="QLabel" name="lblGrandTotal">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>0</height>
+                   </size>
+                  </property>
                   <property name="font">
                    <font>
-                    <pointsize>18</pointsize>
+                    <pointsize>12</pointsize>
                     <weight>75</weight>
                     <bold>true</bold>
                    </font>
@@ -644,6 +686,29 @@ QGroupBox::title {
                   </property>
                  </widget>
                 </item>
+                <item row="1" column="1">
+                 <widget class="QLabel" name="lblDiskon">
+                  <property name="font">
+                   <font>
+                    <weight>75</weight>
+                    <bold>true</bold>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Rp 0</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="0">
+                 <widget class="QLabel" name="label_5">
+                  <property name="text">
+                   <string>Subtotal:</string>
+                  </property>
+                 </widget>
+                </item>
                </layout>
               </widget>
              </item>
@@ -652,6 +717,12 @@ QGroupBox::title {
           </item>
           <item>
            <widget class="QWidget" name="widget" native="true">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="minimumSize">
              <size>
               <width>0</width>
@@ -685,6 +756,13 @@ QGroupBox::title {
                  <width>150</width>
                  <height>40</height>
                 </size>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>11</pointsize>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
                </property>
                <property name="styleSheet">
                 <string notr="true">QPushButton {

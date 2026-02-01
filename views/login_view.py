@@ -71,7 +71,7 @@ class LoginView(QWidget):
         subtitle.setStyleSheet("""
             color: #666; 
             font-size: 14pt;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         """)
         layout.addWidget(subtitle)
         
@@ -128,7 +128,7 @@ class LoginView(QWidget):
         # Login Button
         # ========================================
         self.btn_login = QPushButton("🔐 Login")
-        self.btn_login.setMinimumHeight(50)  # ✅ Button lebih besar
+        self.btn_login.setMinimumHeight(55)  # ✅ Button lebih besar
         self.btn_login.setCursor(Qt.PointingHandCursor)  # ✅ Cursor pointer
         self.btn_login.setStyleSheet("""
             QPushButton {
@@ -164,7 +164,7 @@ class LoginView(QWidget):
             color: #999; 
             font-size: 9pt; 
             margin-top: 15px;
-            padding: 8px;
+            padding: 6px;
             background-color: #fff3cd;
             border: 1px solid #ffc107;
             border-radius: 5px;

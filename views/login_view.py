@@ -233,7 +233,7 @@ class LoginView(QWidget):
             
             # Open main window
             self.main_window = MainWindow()
-            self.main_window.show()
+            self.main_window.showMaximized()
             
             # Close login
             self.close()

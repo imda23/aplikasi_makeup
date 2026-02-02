@@ -85,7 +85,7 @@ class MainWindow(QMainWindow):
         """Go to pelanggan view"""
         from views.pelanggan_view import PelangganView
         self.pelanggan_view = PelangganView()
-        self.pelanggan_view.show()
+        self.pelanggan_view.showMaximized()
         self.close()
 
     @require_role('admin')
@@ -93,7 +93,7 @@ class MainWindow(QMainWindow):
         """Go to layanan view"""
         from views.layanan_view import LayananView
         self.layanan_view = LayananView()
-        self.layanan_view.show()
+        self.layanan_view.showMaximized()
         self.close()
 
     @require_role('admin', 'makeup_artist', 'owner')
@@ -101,7 +101,7 @@ class MainWindow(QMainWindow):
         """Go to jadwal view"""
         from views.jadwal_view import JadwalView
         self.jadwal_view = JadwalView()
-        self.jadwal_view.show()
+        self.jadwal_view.showMaximized()
         self.close()
     
     @require_role('admin', 'kasir', 'owner')
@@ -109,7 +109,7 @@ class MainWindow(QMainWindow):
         """Go to transaksi view"""
         from views.transaksi_view import TransaksiView
         self.transaksi_view = TransaksiView()
-        self.transaksi_view.show()
+        self.transaksi_view.showMaximized()
         self.close()
 
     @require_role('admin', 'kasir', 'owner')
@@ -117,7 +117,7 @@ class MainWindow(QMainWindow):
         """Go to pembayaran view"""
         from views.pembayaran_view import PembayaranView
         self.pembayaran_view = PembayaranView()
-        self.pembayaran_view.show()
+        self.pembayaran_view.showMaximized()
         self.close()
     
     def show_temp_message(self, module_name):

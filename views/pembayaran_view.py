@@ -551,31 +551,31 @@ Proses pembayaran ini?
     def go_dashboard(self):
         from views.main_window import MainWindow
         self.main_window = MainWindow()
-        self.main_window.show()
+        self.main_window.showMaximized()
         self.close()
     
     def go_pelanggan(self):
         from views.pelanggan_view import PelangganView
         self.pelanggan_view = PelangganView()
-        self.pelanggan_view.show()
+        self.pelanggan_view.showMaximized()
         self.close()
     
     def go_layanan(self):
         from views.layanan_view import LayananView
         self.layanan_view = LayananView()
-        self.layanan_view.show()
+        self.layanan_view.showMaximized()
         self.close()
     
     def go_jadwal(self):
         from views.jadwal_view import JadwalView
         self.jadwal_view = JadwalView()
-        self.jadwal_view.show()
+        self.jadwal_view.showMaximized()
         self.close()
     
     def go_transaksi(self):
         from views.transaksi_view import TransaksiView
         self.transaksi_view = TransaksiView()
-        self.transaksi_view.show()
+        self.transaksi_view.showMaximized()
         self.close()
     
     def handle_logout(self):
@@ -590,5 +590,5 @@ Proses pembayaran ini?
             AuthService.logout()
             from views.login_view import LoginView
             login = LoginView()
-            login.show()
+            login.showMaximized()
             self.close()

@@ -1,7 +1,8 @@
 """
 Main window dengan sidebar navigation
 """
-from PyQt5.QtWidgets import QMainWindow, QMessageBox
+from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTableWidgetItem
+from PyQt5.QtCore import Qt
 from ui.generated.ui_dashboard import Ui_MainWindow
 from utils.session_manager import SessionManager
 from services.dashboard_service import DashboardService
@@ -39,6 +40,9 @@ class MainWindow(QMainWindow):
             )
             # Setup menu visibility based on role
             self.setup_menu_visibility(user.role)
+        
+        # Add chart widget
+        self.add_chart_widget()
     
     def setup_menu_visibility(self, role):
         """
@@ -66,6 +70,32 @@ class MainWindow(QMainWindow):
         elif role == 'admin':
             # Admin: Full access - semua visible
             pass
+    
+    def add_chart_widget(self):
+        """Add chart widget to dashboard"""
+        try:
+            from ui.widgets.chart_widget import ChartWidget
+            
+            # Create chart widget
+            self.chart_widget = ChartWidget()
+            
+            # Get layout dari pageContent
+            content_layout = self.ui.pageContent.layout()
+            
+            # Pastikan layout ada
+            if content_layout is not None:
+                # Add chart widget ke layout
+                content_layout.addWidget(self.chart_widget)
+            else:
+                # Jika belum ada layout, buat VBoxLayout baru
+                from PyQt5.QtWidgets import QVBoxLayout
+                new_layout = QVBoxLayout(self.ui.pageContent)
+                new_layout.addWidget(self.chart_widget)
+            
+            logger.info("Chart widget added successfully")
+            
+        except Exception as e:
+            logger.error(f"Error adding chart widget: {e}")
     
     def connect_signals(self):
         """Connect button signals"""
@@ -190,11 +220,10 @@ class MainWindow(QMainWindow):
             logger.error(f"Error loading jadwal: {e}")
     
     def create_table_item(self, text):
-        """Create table widget item"""
-        from PyQt5.QtWidgets import QTableWidgetItem
-        from PyQt5.QtCore import Qt
+        """Create table widget item (read-only)"""
         item = QTableWidgetItem(str(text))
-        item.setFlags(item.flags() & ~Qt.ItemIsEditable)  # Read only
+        # Set read-only by removing ItemIsEditable flag
+        item.setFlags(item.flags() & ~Qt.ItemIsEditable)
         return item
     
     def handle_logout(self):
@@ -219,3 +248,4 @@ class MainWindow(QMainWindow):
             
             # Close main window
             self.close()
+            
